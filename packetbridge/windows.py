@@ -29,6 +29,7 @@ class WindowsBackend:
             pass
         self.lock = threading.RLock()
         self.allowed = {}  # hwnd -> (pid, creation time); blocks stale process IDs
+        self.allow_all = False
         self.focus = None
         self.drag = None
 
@@ -55,7 +56,14 @@ class WindowsBackend:
     def grant(self, ids):
         with self.lock:
             self.release()
+            self.allow_all = False
             self.allowed = {int(i): self.identity(int(i)) for i in ids}
+
+    def grant_all(self):
+        with self.lock:
+            self.release()
+            self.allow_all = True
+            self.allowed = {int(row['id']): self.identity(int(row['id'])) for row in self.discover()}
 
     def validate(self, hwnd):
         if hwnd not in self.allowed or not G.IsWindow(hwnd):
@@ -67,6 +75,9 @@ class WindowsBackend:
 
     def windows(self):
         with self.lock:
+            if self.allow_all:
+                current = {int(row['id']): self.identity(int(row['id'])) for row in self.discover()}
+                self.allowed.update(current)
             result = []
             for hwnd in list(self.allowed):
                 try:

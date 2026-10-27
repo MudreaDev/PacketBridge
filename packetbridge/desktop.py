@@ -36,6 +36,8 @@ class App:
         ttk.Button(bar, text='Actualizează ferestrele', command=self.refresh).pack(side='left')
         ttk.Button(bar, text='Partajează selecția', command=self.grant).pack(side='left', padx=8)
         if sys.platform == 'win32':
+            ttk.Button(bar, text='Partajează toate ferestrele Packet Tracer', command=self.start_packettracer_session).pack(side='left', padx=8)
+        if sys.platform == 'win32':
             ttk.Button(bar, text='Partajează desktopul complet', command=self.start_desktop).pack(side='left', padx=8)
         ttk.Label(frame, text='Ctrl+click: mai multe ferestre. Pentru CLI nou: actualizează și selectează-l.', wraplength=690).pack(anchor='w', pady=6)
         self.code = tk.StringVar(value='—')
@@ -119,6 +121,21 @@ class App:
         self.list.delete(0, 'end')
         self.list.insert(0, self.rows[0]['title'])
         self.list.selection_set(0)
+        self.start()
+
+    def start_packettracer_session(self):
+        if sys.platform != 'win32' or self.agent or not self.backend:
+            return
+        # Include every currently visible Packet Tracer top-level window.
+        # Newly opened windows can still be added with Refresh + Share selection.
+        self.list.selection_set(0, 'end')
+        if not self.list.curselection():
+            messagebox.showinfo('PacketBridge', 'Deschide Packet Tracer înainte de partajare.')
+            return
+        if hasattr(self.backend, 'grant_all'):
+            self.backend.grant_all()
+        else:
+            self.grant()
         self.start()
 
     def client(self):
