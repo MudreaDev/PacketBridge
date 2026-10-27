@@ -1,5 +1,76 @@
 # PacketBridge 0.1 — prototip experimental
 
+## Conectare rapidă între Windows și Mac
+
+PacketBridge funcționează în ambele direcții:
+
+- Windows găzduiește Packet Tracer → Mac se conectează din browser;
+- Mac găzduiește Packet Tracer → Windows se conectează din browser.
+
+### 1. Pregătire, o singură dată
+
+Pe Windows, instalează dependențele și creează regula de firewall:
+
+```powershell
+& "C:\Users\Mihai\AppData\Local\Python\bin\python.exe" -m pip install -r requirements.txt
+New-NetFirewallRule -DisplayName "PacketBridge Relay" -Direction Inbound -Protocol TCP -LocalPort 8765 -Action Allow
+```
+
+Pe Mac, deschide `Configureaza-PacketBridge-Mac.command`. Acordă Terminalului sau Python permisiunile **Screen Recording** și **Accessibility** în System Settings. macOS cere confirmarea manuală a acestor permisiuni.
+
+### 2. Windows găzduiește, Mac se conectează
+
+Pe Windows, dublu-click pe `PacketBridge.lnk`. Aplicația detectează IP-ul local și pornește relay-ul.
+
+În aplicație, verifică adresa serverului și apasă **Actualizează ferestrele**, selectează `PacketTracer`, apoi **Generează cod**.
+
+Pe Mac, deschide în browser:
+
+```text
+http://IP-UL-WINDOWS:8765
+```
+
+Introdu codul afișat pe Windows. Gazda aprobă cererea.
+
+### 3. Mac găzduiește, Windows se conectează
+
+Pe Mac, dublu-click pe `Porneste-PacketBridge.command`. Launcherul detectează IP-ul Mac-ului și pornește relay-ul.
+
+În PacketBridge pe Mac, apasă **Actualizează ferestrele**, selectează Packet Tracer și apasă **Generează cod**.
+
+Pe Windows, pornește aplicația și introdu adresa:
+
+```text
+http://IP-UL-MAC:8765
+```
+
+Apasă **Conectează-te ca participant · deschide clientul**, introdu codul și așteaptă aprobarea gazdei.
+
+### 4. Cum găsești IP-ul local
+
+Pe Windows:
+
+```powershell
+ipconfig
+```
+
+Pe Mac:
+
+```bash
+ipconfig getifaddr en0
+```
+
+Dacă nu afișează nimic, încearcă `en1`. Ambele calculatoare trebuie să fie în aceeași rețea Wi-Fi/LAN. Nu folosi `127.0.0.1` pentru conectarea de pe celălalt calculator.
+
+### 5. Dacă nu se conectează
+
+- verifică să fie relay-ul pornit pe calculatorul gazdă;
+- verifică să folosești IP-ul calculatorului gazdă, nu IP-ul participantului;
+- verifică firewall-ul pe Windows;
+- pe Mac, verifică din nou **Screen Recording** și **Accessibility**;
+- Packet Tracer nu trebuie minimizat;
+- după schimbarea rețelei, rulează din nou launcherul pentru detectarea noului IP.
+
 Colaborare autorizată în Cisco Packet Tracer: gazda selectează ferestrele, oferă un cod temporar și acceptă participantul. Participantul vede ferestrele aprobate într-un browser și trimite clickuri/taste. Nu se desenează un cursor remote peste ecranul gazdei și adaptorul nu folosește `SetCursorPos` sau `SendInput`.
 
 **Stare reală:** codul și testele de protocol sunt implementate. Integrarea cu Packet Tracer pe Windows NU a fost verificată pe un sistem Windows. Codul este publicat în repository-ul GitHub. Pachetele experimentale sunt generate prin GitHub Actions; vezi secțiunea Releases. Nu există încă un server public activ. Nu este un înlocuitor complet verificat pentru AnyDesk.

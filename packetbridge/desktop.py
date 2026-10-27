@@ -50,10 +50,15 @@ class App:
         if sys.platform == 'win32':
             from .windows import WindowsBackend
             self.backend = WindowsBackend()
+        elif sys.platform == 'darwin':
+            from .macos import MacBackend
+            self.backend = MacBackend()
+            self.status.set('Mac host experimental · activează Screen Recording și Accessibility')
+        if self.backend:
             self.refresh()
         else:
             self.start_button.configure(state='disabled')
-            self.status.set('Pe Mac: participant prin browser. Gazda macOS nu este implementată în v0.1.')
+            self.status.set('Gazda este disponibilă doar pe Windows și macOS.')
         root.protocol('WM_DELETE_WINDOW', self.close)
         root.after(100, self.poll)
 
