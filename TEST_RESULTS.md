@@ -11,6 +11,10 @@ Mediu: Linux, Python 3.12.14, websockets 16.0.
 - Interfața desktop Tk: **nevalidată vizual** în acest mediu fără display.
 - Adaptorul nativ Windows: **neexecutat**; acest mediu nu are Windows sau Packet Tracer.
 - macOS: launcher de client inclus, gazda macOS neimplementată.
-- Build-uri PyInstaller, workflow GitHub Actions, pachete .exe/.app, TLS/deploy public: **nerulate**.
+- GitHub Actions: testele și build-urile PyInstaller au reușit pe Windows x64, macOS ARM64 și macOS x64.
+- Prerelease `v0.1.1`: toate cele trei arhive publicate.
+- Pornirea executabilelor compilate și comportamentul Packet Tracer real: **nevalidate**.
+- TLS/deploy public: **nerulat**.
+- Rularea verificată: https://github.com/MudreaDev/PacketBridge/actions/runs/40487688476
 
 Aceste rezultate confirmă protocolul și logica testată, nu compatibilitatea nativă cu Packet Tracer sau calitatea unui produs final.

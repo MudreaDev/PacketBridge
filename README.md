@@ -2,7 +2,7 @@
 
 Colaborare autorizată în Cisco Packet Tracer: gazda selectează ferestrele, oferă un cod temporar și acceptă participantul. Participantul vede ferestrele aprobate într-un browser și trimite clickuri/taste. Nu se desenează un cursor remote peste ecranul gazdei și adaptorul nu folosește `SetCursorPos` sau `SendInput`.
 
-**Stare reală:** codul și testele de protocol sunt implementate. Integrarea cu Packet Tracer pe Windows NU a fost verificată pe un sistem Windows. Nu există încă un server public activ, un GitHub Release sau executabile compilate. Nu este un înlocuitor complet verificat pentru AnyDesk.
+**Stare reală:** codul și testele de protocol sunt implementate. Integrarea cu Packet Tracer pe Windows NU a fost verificată pe un sistem Windows. Codul este publicat în repository-ul GitHub. Pachetele experimentale sunt generate prin GitHub Actions; vezi secțiunea Releases. Nu există încă un server public activ. Nu este un înlocuitor complet verificat pentru AnyDesk.
 
 | Funcție | v0.1 |
 |---|---|
@@ -15,7 +15,19 @@ Colaborare autorizată în Cisco Packet Tracer: gazda selectează ferestrele, of
 | Text CLI + taste de navigare | Implementate; fără Ctrl/Cmd/Alt în această versiune |
 | Fereastră minimizată | Nu este suportată |
 | Captură fără desktop în fundal | Solicitare de randare adresată ferestrei; poate fi neagră/incompletă |
-| Pachete Windows și Mac | Workflow de build inclus, încă nerulat |
+| Pachete Windows și Mac | Build-uri GitHub Actions; arhive în Releases |
+
+## Pachete compilate
+
+Descarcă arhiva potrivită din [GitHub Releases](https://github.com/MudreaDev/PacketBridge/releases):
+
+- Windows: dezarhivează întregul `PacketBridge-Windows-x64.zip`, apoi pornește `PacketBridge/PacketBridge.exe`. Păstrează folderul `_internal` lângă executabil.
+- Mac Apple Silicon: `PacketBridge-macOS-arm64.zip`.
+- Mac Intel: `PacketBridge-macOS-x64.zip`.
+
+Pe Mac, deschide aplicația `PacketBridge.app` din arhivă. Clientul Mac deschide browserul. Nu este încă o gazdă pentru Packet Tracer pe macOS.
+
+**Conectarea prin internet necesită în continuare un relay HTTPS separat**, configurat conform secțiunii de mai jos. Compilarea reușită nu validează controlul Packet Tracer sau pornirea interfeței pe calculatorul tău.
 
 ## Pornire locală din surse
 
@@ -83,9 +95,9 @@ Workflow-ul `.github/workflows/build.yml`:
 - verifică testele pe Linux și pe sistemele de build;
 - generează Windows x64, macOS ARM64 și macOS x64;
 - păstrează arhivele în Actions → Artifacts;
-- la un tag `v*`, publică un **prerelease** cu arhivele.
+- după un push pe `main` sau o pornire manuală, publică automat un **prerelease** `v0.1.<numărul-rulării>` cu arhivele; un tag explicit `v*` îi păstrează numele.
 
-Pentru un repository dedicat nou, pune conținutul acestui folder în rădăcina repository-ului. Nu urca `.venv`, `dist` sau fișiere cu secrete. După primul build reușit, creează un tag, de exemplu `v0.1.0`. Workflow-ul de Release nu a fost încă executat și runner-ele/dependențele pot necesita ajustări la prima rulare.
+Pentru un repository dedicat nou, pune conținutul acestui folder în rădăcina repository-ului. Nu urca `.venv`, `dist` sau fișiere cu secrete. Nu este necesară crearea manuală a unui tag pentru build-urile de pe `main`. Pentru un tag ales explicit, de exemplu `v0.2.0`, workflow-ul publică release-ul cu acel nume.
 
 ## Limitări importante și testarea pe PC
 
