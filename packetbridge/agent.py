@@ -64,7 +64,7 @@ class Agent:
                 last_windows = None
                 last_error = None
                 while not self.stop.is_set():
-                    await asyncio.sleep(0.08)
+                    await asyncio.sleep(0.05)
                     if not self.active:
                         continue
                     windows = await asyncio.to_thread(self.backend.windows)

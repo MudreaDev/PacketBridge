@@ -119,9 +119,9 @@ class WindowsBackend:
                     extrema = frame.getextrema()
                     if not rendered or all(hi - lo < 2 for lo, hi in extrema):
                         raise ValueError('Captură uniformă/neagră: Packet Tracer refuză capturarea ferestrei')
-                frame.thumbnail((1600, 1000))
+                frame.thumbnail((1920, 1200))
                 output = io.BytesIO()
-                frame.save(output, 'JPEG', quality=75)
+                frame.save(output, 'JPEG', quality=68, optimize=True)
                 return output.getvalue(), frame.width, frame.height
             finally:
                 if memory and previous:
@@ -269,9 +269,9 @@ class DesktopBackend:
         if not self.allowed or str(wid) != self.desktop_id:
             raise ValueError('Desktopul complet nu este autorizat')
         frame = ImageGrab.grab(all_screens=True)
-        frame.thumbnail((1600, 1000))
+        frame.thumbnail((1920, 1200))
         output = io.BytesIO()
-        frame.convert('RGB').save(output, 'JPEG', quality=75)
+        frame.convert('RGB').save(output, 'JPEG', quality=68, optimize=True)
         return output.getvalue(), frame.width, frame.height
 
     def input(self, data):
