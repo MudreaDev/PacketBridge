@@ -1,6 +1,6 @@
 'use strict';
 const $ = id => document.getElementById(id);
-let ws, connected = false, selected = null, shown = null, metadata = null, lastMove = 0, renderSerial = 0;
+let ws, connected = false, selected = null, shown = null, metadata = null, lastMove = 0, renderSerial = 0, previousWindows = [];
 const canvas = $('screen'), ctx = canvas.getContext('2d');
 function send(data) { if(ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(data)); }
 function command(data) { if(connected && shown && shown === selected) send({...data,window:shown}); }
@@ -18,6 +18,8 @@ $('form').addEventListener('submit', e => {
   ws.onclose=reset;
   ws.onmessage=async e=>{
     if(e.data instanceof Blob){
+      // Release the relay immediately so capture does not wait for image decode.
+      send({type:'ack'});
       const meta=metadata, serial=renderSerial;metadata=null;
       try{
         if(!meta || meta.window!==selected)return;
@@ -28,7 +30,6 @@ $('form').addEventListener('submit', e => {
           canvas.classList.add('ready');$('empty').hidden=true;
         }finally{img.close();}
       }catch(err){$('error').textContent='Cadrul nu a putut fi afișat.';}
-      finally{send({type:'ack'});}
       return;
     }
     let m;try{m=JSON.parse(e.data);}catch{return;}
@@ -39,8 +40,11 @@ $('form').addEventListener('submit', e => {
     else if(m.type==='windows'){
       const list=$('windows');list.replaceChildren();
       for(const w of m.windows){const o=document.createElement('option');o.value=w.id;o.textContent=w.title;list.append(o);}
-      if(!m.windows.some(w=>w.id===selected)){selected=m.windows[0]?.id||null;clearFrame();}
+      const added=m.windows.find(w=>!previousWindows.includes(w.id));
+      if(added){selected=added.id;clearFrame();}
+      else if(!m.windows.some(w=>w.id===selected)){selected=m.windows[0]?.id||null;clearFrame();}
       list.value=selected||'';if(selected)send({type:'select',window:selected});
+      previousWindows=m.windows.map(w=>w.id);
     }
   };
 });
