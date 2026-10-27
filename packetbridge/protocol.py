@@ -42,10 +42,10 @@ def control(data):
         if type(delta) is not int or not -120 <= delta <= 120:
             raise ValueError('Scroll invalid')
         out.update(action=data['action'], button=button, delta=delta)
-    elif kind == 'text':
+    elif kind in {'text', 'clipboard'}:
         value = data.get('text')
         if not isinstance(value, str) or not 1 <= len(value) <= 2048:
-            raise ValueError('Text invalid')
+            raise ValueError('Text clipboard invalid')
         if any(ord(c) < 32 and c not in '\r\n\t' for c in value):
             raise ValueError('Caractere de control nepermise')
         out['text'] = value

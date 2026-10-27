@@ -9,6 +9,8 @@ import win32con as C
 import win32gui as G
 import win32process as P
 import win32ui
+import win32clipboard
+from win32clipboard import CF_UNICODETEXT
 from PIL import Image
 from PIL import ImageGrab
 
@@ -221,6 +223,14 @@ class WindowsBackend:
                 encoded = text.encode('utf-16-le')
                 for i in range(0, len(encoded), 2):
                     G.PostMessage(target, C.WM_CHAR, int.from_bytes(encoded[i:i + 2], 'little'), 1)
+            elif kind == 'clipboard':
+                win32clipboard.OpenClipboard()
+                try:
+                    win32clipboard.EmptyClipboard()
+                    win32clipboard.SetClipboardData(CF_UNICODETEXT, data['text'])
+                finally:
+                    win32clipboard.CloseClipboard()
+                G.PostMessage(self.keyboard_target(root), C.WM_PASTE, 0, 0)
             elif kind == 'key':
                 key = data['key']
                 target = self.keyboard_target(root)

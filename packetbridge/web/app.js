@@ -52,6 +52,8 @@ $('windows').onchange=()=>{send({type:'release'});selected=$('windows').value;cl
 $('disconnect').onclick=()=>{send({type:'release'});ws?.close();};
 $('release').onclick=()=>send({type:'release'});
 $('sendText').onclick=()=>{const text=$('text').value;if(text)command({type:'text',text});};
+const pasteClipboard=$('sendText').cloneNode(false);pasteClipboard.id='pasteClipboard';pasteClipboard.textContent='Paste din clipboard';pasteClipboard.className='secondary';$('sendText').after(pasteClipboard);
+pasteClipboard.onclick=async()=>{try{const text=await navigator.clipboard.readText();if(text)command({type:'clipboard',text});else $('error').textContent='Clipboardul este gol.';}catch{$('error').textContent='Permite accesul la clipboard în browser și încearcă din nou.';}};
 $('enter').onclick=()=>command({type:'key',key:'Enter'});
 function point(e,action){const r=canvas.getBoundingClientRect();return{type:'pointer',action,x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height)),button:e.button===2?2:0};}
 canvas.onpointerdown=e=>{if(e.button!==0&&e.button!==2)return;e.preventDefault();canvas.focus();canvas.setPointerCapture(e.pointerId);command(point(e,'down'));};
