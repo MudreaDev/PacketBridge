@@ -115,17 +115,29 @@ class Relay:
                     break  # A rejected invitation is invalidated, not reused.
                 elif host and kind in {'windows', 'frame', 'error'} and room.approved:
                     await self.send(room.client, data)
+                elif not host and kind == 'release' and not room.approved:
+                    # Browsers send release when the page loses focus while
+                    # the host is deciding whether to accept the invitation.
+                    # It is harmless before approval and must not abort the room.
+                    continue
                 elif not host and room.approved:
                     await self.send(room.host, control(data))
                 else:
                     raise ValueError('Sesiunea nu este aprobată')
         except (ValueError, TimeoutError) as exc:
+            print(f'PacketBridge session error: {exc}', flush=True)
             try:
                 await self.send(ws, {'type': 'error', 'message': str(exc)})
             except (ConnectionClosed, TimeoutError):
                 pass
         except ConnectionClosed:
             pass
+        except Exception as exc:
+            print(f'PacketBridge unexpected session error: {type(exc).__name__}: {exc}', flush=True)
+            try:
+                await self.send(ws, {'type': 'error', 'message': 'Eroare internă a relay-ului'})
+            except Exception:
+                pass
         finally:
             if room:
                 if self.rooms.get(code) is room:
