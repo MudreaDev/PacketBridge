@@ -10,6 +10,7 @@ import win32gui as G
 import win32process as P
 import win32ui
 from PIL import Image
+from PIL import ImageGrab
 
 
 class GuiThreadInfo(ctypes.Structure):
@@ -223,3 +224,92 @@ class WindowsBackend:
                     bits |= 1 << 24
                 G.PostMessage(target, C.WM_KEYDOWN, vk, bits)
                 G.PostMessage(target, C.WM_KEYUP, vk, bits | (3 << 30))
+
+
+class DesktopBackend:
+    """Explicit full-desktop mode; input is global and requires host consent."""
+    desktop_id = '0'
+
+    def __init__(self):
+        self.allowed = False
+        self.lock = threading.RLock()
+        self.left_down = False
+        self.right_down = False
+
+    def discover(self):
+        return [{'id': self.desktop_id, 'title': 'Desktop complet · control global'}]
+
+    def grant(self, ids):
+        if self.desktop_id not in ids:
+            raise ValueError('Selectează desktopul complet')
+        self.allowed = True
+
+    def release(self):
+        if self.left_down:
+            win32api.mouse_event(C.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+        if self.right_down:
+            win32api.mouse_event(C.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
+        self.left_down = self.right_down = False
+
+    def windows(self):
+        return self.discover() if self.allowed else []
+
+    def capture(self, wid):
+        if not self.allowed or str(wid) != self.desktop_id:
+            raise ValueError('Desktopul complet nu este autorizat')
+        frame = ImageGrab.grab(all_screens=True)
+        frame.thumbnail((1600, 1000))
+        output = io.BytesIO()
+        frame.convert('RGB').save(output, 'JPEG', quality=75)
+        return output.getvalue(), frame.width, frame.height
+
+    def input(self, data):
+        with self.lock:
+            if data['type'] == 'release':
+                self.release()
+                return
+            if not self.allowed or str(data.get('window')) != self.desktop_id:
+                raise ValueError('Desktopul complet nu este autorizat')
+            if data['type'] == 'pointer':
+                left = win32api.GetSystemMetrics(C.SM_XVIRTUALSCREEN)
+                top = win32api.GetSystemMetrics(C.SM_YVIRTUALSCREEN)
+                width = win32api.GetSystemMetrics(C.SM_CXVIRTUALSCREEN)
+                height = win32api.GetSystemMetrics(C.SM_CYVIRTUALSCREEN)
+                x = left + round(data['x'] * max(1, width - 1))
+                y = top + round(data['y'] * max(1, height - 1))
+                win32api.SetCursorPos((x, y))
+                action, button = data['action'], data.get('button', 0)
+                if action == 'down':
+                    flag = C.MOUSEEVENTF_RIGHTDOWN if button == 2 else C.MOUSEEVENTF_LEFTDOWN
+                    win32api.mouse_event(flag, 0, 0, 0, 0)
+                    if button == 2: self.right_down = True
+                    else: self.left_down = True
+                elif action == 'up':
+                    flag = C.MOUSEEVENTF_RIGHTUP if button == 2 else C.MOUSEEVENTF_LEFTUP
+                    win32api.mouse_event(flag, 0, 0, 0, 0)
+                    if button == 2: self.right_down = False
+                    else: self.left_down = False
+                elif action == 'double':
+                    flag = C.MOUSEEVENTF_RIGHTDOWN if button == 2 else C.MOUSEEVENTF_LEFTDOWN
+                    up = C.MOUSEEVENTF_RIGHTUP if button == 2 else C.MOUSEEVENTF_LEFTUP
+                    win32api.mouse_event(flag, 0, 0, 0, 0)
+                    win32api.mouse_event(up, 0, 0, 0, 0)
+                    win32api.mouse_event(flag, 0, 0, 0, 0)
+                    win32api.mouse_event(up, 0, 0, 0, 0)
+                elif action == 'wheel':
+                    win32api.mouse_event(C.MOUSEEVENTF_WHEEL, 0, 0, data.get('delta', 0), 0)
+            elif data['type'] == 'text':
+                for char in data['text']:
+                    code = ord(char)
+                    win32api.keybd_event(0, code, C.KEYEVENTF_UNICODE, 0)
+                    win32api.keybd_event(0, code, C.KEYEVENTF_UNICODE | C.KEYEVENTF_KEYUP, 0)
+            elif data['type'] == 'key':
+                mapping = {'Enter': C.VK_RETURN, 'Backspace': C.VK_BACK,
+                           'Tab': C.VK_TAB, 'Escape': C.VK_ESCAPE, 'Delete': C.VK_DELETE,
+                           'ArrowLeft': C.VK_LEFT, 'ArrowRight': C.VK_RIGHT,
+                           'ArrowUp': C.VK_UP, 'ArrowDown': C.VK_DOWN,
+                           'Home': C.VK_HOME, 'End': C.VK_END,
+                           'PageUp': C.VK_PRIOR, 'PageDown': C.VK_NEXT}
+                vk = mapping[data['key']]
+                win32api.keybd_event(vk, 0, 0, 0)
+                win32api.keybd_event(vk, 0, C.KEYEVENTF_KEYUP, 0)

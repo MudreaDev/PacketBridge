@@ -35,6 +35,8 @@ class App:
         bar.pack(fill='x')
         ttk.Button(bar, text='Actualizează ferestrele', command=self.refresh).pack(side='left')
         ttk.Button(bar, text='Partajează selecția', command=self.grant).pack(side='left', padx=8)
+        if sys.platform == 'win32':
+            ttk.Button(bar, text='Partajează desktopul complet', command=self.start_desktop).pack(side='left', padx=8)
         ttk.Label(frame, text='Ctrl+click: mai multe ferestre. Pentru CLI nou: actualizează și selectează-l.', wraplength=690).pack(anchor='w', pady=6)
         self.code = tk.StringVar(value='—')
         ttk.Entry(frame, textvariable=self.code, state='readonly', font=('Consolas', 24), justify='center').pack(fill='x', pady=10)
@@ -102,6 +104,22 @@ class App:
         self.start_button.configure(state='disabled')
         self.status.set('Conectare la server…')
         self.agent.start()
+
+    def start_desktop(self):
+        if sys.platform != 'win32' or self.agent:
+            return
+        from .windows import DesktopBackend
+        accepted = messagebox.askyesno(
+            'Control global',
+            'Atenție: participantul va vedea și controla întregul desktop, inclusiv alte aplicații. Continui?')
+        if not accepted:
+            return
+        self.backend = DesktopBackend()
+        self.rows = self.backend.discover()
+        self.list.delete(0, 'end')
+        self.list.insert(0, self.rows[0]['title'])
+        self.list.selection_set(0)
+        self.start()
 
     def client(self):
         try:
