@@ -164,10 +164,10 @@ class Relay:
         return response
 
 
-async def run(bind, port, origin):
+async def run(bind, port, origin, allow_any_origin=False):
     relay = Relay()
     async with serve(relay.handler, bind, port, process_request=relay.http,
-                     origins=[origin, None], max_size=MAX_FRAME, max_queue=4,
+                     origins=None if allow_any_origin else [origin, None], max_size=MAX_FRAME, max_queue=4,
                      compression=None, ping_interval=15, ping_timeout=20):
         print(f'PacketBridge relay: {bind}:{port}; browser origin: {origin}', flush=True)
         await asyncio.Future()
@@ -178,8 +178,9 @@ def main():
     parser.add_argument('--bind', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=8765)
     parser.add_argument('--origin', default='http://127.0.0.1:8765')
+    parser.add_argument('--allow-any-origin', action='store_true')
     args = parser.parse_args()
-    asyncio.run(run(args.bind, args.port, args.origin))
+    asyncio.run(run(args.bind, args.port, args.origin, args.allow_any_origin))
 
 
 if __name__ == '__main__':

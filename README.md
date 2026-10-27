@@ -71,6 +71,12 @@ Dacă nu afișează nimic, încearcă `en1`. Ambele calculatoare trebuie să fie
 - Packet Tracer nu trebuie minimizat;
 - după schimbarea rețelei, rulează din nou launcherul pentru detectarea noului IP.
 
+### 6. Conectare prin internet fără server plătit
+
+Pentru testare, poți folosi `Porneste-PacketBridge-Public.bat`. Ai nevoie de `cloudflared.exe` în rădăcina proiectului; descarcă varianta Windows x64 din [Cloudflare Downloads](https://developers.cloudflare.com/tunnel/downloads/). Launcherul pornește relay-ul local și un Quick Tunnel, apoi afișează un URL temporar `https://....trycloudflare.com`. Participantul folosește acel URL, iar WebSocket-ul se conectează prin HTTPS.
+
+URL-ul este public și se schimbă la fiecare pornire. Trimite-l doar persoanei autorizate și oprește fereastra tunnelului când termini. Quick Tunnels sunt pentru testare, nu pentru producție.
+
 Colaborare autorizată în Cisco Packet Tracer: gazda selectează ferestrele, oferă un cod temporar și acceptă participantul. Participantul vede ferestrele aprobate într-un browser și trimite clickuri/taste. Nu se desenează un cursor remote peste ecranul gazdei și adaptorul nu folosește `SetCursorPos` sau `SendInput`.
 
 **Stare reală:** codul și testele de protocol sunt implementate. Integrarea cu Packet Tracer pe Windows NU a fost verificată pe un sistem Windows. Codul este publicat în repository-ul GitHub. Pachetele experimentale sunt generate prin GitHub Actions; vezi secțiunea Releases. Nu există încă un server public activ. Nu este un înlocuitor complet verificat pentru AnyDesk.
