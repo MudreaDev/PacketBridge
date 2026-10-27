@@ -91,14 +91,22 @@ class WindowsBackend:
                 bitmap.CreateCompatibleBitmap(source, w, h)
                 previous = memory.SelectObject(bitmap)
                 memory.FillSolidRect((0, 0, w, h), 0)
-                # Bounded alternative to PrintWindow: asks the application to paint
-                # its client and children. No fallback to desktop screenshots.
+                # First ask Qt to paint the client and children. Packet Tracer
+                # may use GPU-backed widgets and return a uniform frame here.
                 G.SendMessageTimeout(hwnd, C.WM_PRINT, memory.GetSafeHdc(),
                                      4 | 8 | 16, C.SMTO_ABORTIFHUNG, 500)
                 frame = Image.frombuffer('RGB', (w, h), bitmap.GetBitmapBits(True), 'raw', 'BGRX', 0, 1)
                 extrema = frame.getextrema()
                 if all(hi - lo < 2 for lo, hi in extrema):
-                    raise ValueError('Captură uniformă/neagră: această fereastră nu suportă captura experimentală')
+                    # PW_RENDERFULLCONTENT is supported by modern Windows and
+                    # works better for Qt/OpenGL windows than WM_PRINT.
+                    memory.FillSolidRect((0, 0, w, h), 0)
+                    rendered = ctypes.windll.user32.PrintWindow(
+                        hwnd, memory.GetSafeHdc(), 2)
+                    frame = Image.frombuffer('RGB', (w, h), bitmap.GetBitmapBits(True), 'raw', 'BGRX', 0, 1)
+                    extrema = frame.getextrema()
+                    if not rendered or all(hi - lo < 2 for lo, hi in extrema):
+                        raise ValueError('Captură uniformă/neagră: Packet Tracer refuză capturarea ferestrei')
                 frame.thumbnail((1600, 1000))
                 output = io.BytesIO()
                 frame.save(output, 'JPEG', quality=75)
